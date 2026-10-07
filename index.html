@@ -349,7 +349,7 @@ const LANGS = ['zh', 'zht', 'en'];             // 简体 / 繁體（台湾用字
 let LANG = (() => { try { const l = localStorage.getItem(LANG_KEY); return LANGS.includes(l) ? l : 'zh'; } catch(e) { return 'zh'; } })();
 // 简 → 繁：先按词替换一字多义的字，再逐字查表（表由 OpenCC s2tw 按本页用到的字生成）
 const S2T_PHRASES = [['布置','佈置'],['布局','佈局'],['台面','檯面'],['复制','複製']];
-const S2T = new Map(('与與两兩个個为為书書于於仅僅从從价價会會传傳体體余餘侧側倾傾储儲儿兒关關内內写寫净淨准準击擊则則刚剛删刪制製办辦动動势勢区區单單占佔卧臥卫衛厅廳历歷压壓厨廚双雙发發变變叶葉后後吗嗎听聽启啟哑啞围圍图圖圆圓场場坐座块塊垫墊墙牆处處备備复復头頭妆妝婴嬰实實宽寬对對导導层層屉屜属屬岛島带帶干乾并並库庫应應开開当當径徑态態总總悬懸懒懶户戶护護拟擬择擇挂掛挡擋挤擠损損换換据據摆擺摇搖撑撐数數无無时時显顯暂暫机機杂雜杆桿条條来來松鬆构構柜櫃标標栈棧栏欄样樣梁樑棱稜椭橢横橫橱櫥气氣没沒注註浅淺测測浏瀏游遊滚滾满滿灯燈灵靈点點热熱状狀独獨环環现現电電画畫监監盖蓋盘盤砖磚确確离離积積称稱竖豎筑築签籤类類约約级級线線结結绕繞绘繪给給统統继繼绿綠缀綴编編缝縫缩縮网網联聯脚腳获獲虚虛装裝见見视視览覽触觸计計认認让讓议議记記设設识識译譯该該语語请請读讀调調负負败敗质質贴貼赶趕转轉轮輪软軟轴軸轻輕载載较較辅輔辑輯边邊过過这這进進远遠适適选選邻鄰里裡针針钢鋼钮鈕铰鉸铺鋪销銷锁鎖键鍵镜鏡长長门門闭閉闲閒间間阅閱阳陽阴陰阶階随隨隐隱静靜页頁顶頂项項顺順颜顏飘飄飞飛马馬鸟鳥齐齊龙龍').match(/../gu).map(p => [...p]));
+const S2T = new Map(('创創喷噴涂塗锈鏽与與两兩个個为為书書于於仅僅从從价價会會传傳体體余餘侧側倾傾储儲儿兒关關内內写寫净淨准準击擊则則刚剛删刪制製办辦动動势勢区區单單占佔卧臥卫衛厅廳历歷压壓厨廚双雙发發变變叶葉后後吗嗎听聽启啟哑啞围圍图圖圆圓场場坐座块塊垫墊墙牆处處备備复復头頭妆妝婴嬰实實宽寬对對导導层層屉屜属屬岛島带帶干乾并並库庫应應开開当當径徑态態总總悬懸懒懶户戶护護拟擬择擇挂掛挡擋挤擠损損换換据據摆擺摇搖撑撐数數无無时時显顯暂暫机機杂雜杆桿条條来來松鬆构構柜櫃标標栈棧栏欄样樣梁樑棱稜椭橢横橫橱櫥气氣没沒注註浅淺测測浏瀏游遊滚滾满滿灯燈灵靈点點热熱状狀独獨环環现現电電画畫监監盖蓋盘盤砖磚确確离離积積称稱竖豎筑築签籤类類约約级級线線结結绕繞绘繪给給统統继繼绿綠缀綴编編缝縫缩縮网網联聯脚腳获獲虚虛装裝见見视視览覽触觸计計认認让讓议議记記设設识識译譯该該语語请請读讀调調负負败敗质質贴貼赶趕转轉轮輪软軟轴軸轻輕载載较較辅輔辑輯边邊过過这這进進远遠适適选選邻鄰里裡针針钢鋼钮鈕铰鉸铺鋪销銷锁鎖键鍵镜鏡长長门門闭閉闲閒间間阅閱阳陽阴陰阶階随隨隐隱静靜页頁顶頂项項顺順颜顏飘飄飞飛马馬鸟鳥齐齊龙龍').match(/../gu).map(p => [...p]));
 const s2t = s => S2T_PHRASES.reduce((a, [f, t]) => a.replaceAll(f, t), s).replace(/[\u3400-\u9fff]/g, c => S2T.get(c) || c);
 const tr = (zh, en) => LANG === 'en' ? en : LANG === 'zht' ? s2t(zh) : zh;
 // 内置的房间 / 材料 / 家具名称存的是中文；英文界面下显示译名，用户自己改过的名称原样显示
@@ -365,6 +365,9 @@ const NAMES_EN = {
   '书架':'Bookshelf', '飘窗垫':'Bay Cushion', '三人沙发':'3-Seat Sofa', '双人沙发':'Loveseat', '转角沙发':'Corner Sofa',
   '单人沙发':'Armchair', '懒人沙发':'Beanbag', '茶几':'Coffee Table', '边几':'Side Table', '电视柜':'TV Stand', '地毯':'Rug',
   '鞋柜':'Shoe Cabinet', '玄关柜':'Entry Cabinet', '落地灯':'Floor Lamp', '绿植':'Plant', '大绿植':'Large Plant',
+  '创作 · 工作':'Makers & Work', '桌子':'Table', '工作台':'Workbench', '洞洞板展示柜':'Pegboard Display Cabinet',
+  '模型喷涂工作桌':'Model Painting Desk', '模型展示柜':'Model Display Cabinet', '置物架':'Storage Rack', '洞洞板':'Pegboard',
+  '厨房不锈钢台面':'Stainless Steel Kitchen Counter',
   '餐桌':'Dining Table', '六人餐桌':'6-Seat Dining Table', '圆桌':'Round Table', '餐椅':'Dining Chair', '岛台':'Kitchen Island',
   '吧椅':'Bar Stool', '橱柜台面':'Kitchen Counter', '燃气灶':'Gas Stove', '水槽':'Sink', '冰箱':'Fridge', '餐边柜':'Sideboard',
   '马桶':'Toilet', '浴室柜':'Vanity', '双盆浴室柜':'Double Vanity', '淋浴房':'Shower', '淋浴区':'Shower Area', '浴缸':'Bathtub',
@@ -469,6 +472,11 @@ const MATS = {
 };
 // 家具库：[类型, 名称, 宽, 深, 颜色]
 const LIB = [
+  {cat:'创作 · 工作', items:[
+    ['plaintable','桌子',1400,800,'#e2cfb4'],['workbench','工作台',1800,750,'#d8c2a2'],
+    ['pegcabinet','洞洞板展示柜',1200,450,'#e2cfb4'],['paintbench','模型喷涂工作桌',1600,750,'#d8c2a2'],
+    ['modelcabinet','模型展示柜',1200,450,'#59666d'],['storagerack','置物架',1200,450,'#626f72'],
+    ['pegboard','洞洞板',1200,80,'#d9d5cc']]},
   {cat:'卧室', items:[
     ['bed','双人床 1.8m',1800,2000,'#c9d6df'],['bed','双人床 1.5m',1500,2000,'#d8c7dc'],['bed','单人床',1200,2000,'#e8d5b5'],
     ['crib','婴儿床',1250,700,'#efe3d0'],['nightstand','床头柜',450,400,'#e8dccb'],['wardrobe','衣柜',2000,600,'#efe6d8'],
@@ -481,6 +489,7 @@ const LIB = [
     ['shoecab','鞋柜',1000,350,'#efe6d8'],['shoecab','玄关柜',1400,380,'#e6dccc'],['floorlamp','落地灯',450,450,'#3d3a34'],
     ['plant','绿植',500,500,'#a9c39b'],['plant','大绿植',700,700,'#9dbb8c']]},
   {cat:'餐厨', items:[
+    ['steelcounter','厨房不锈钢台面',1600,600,'#e2e3dc'],
     ['table','餐桌',1400,800,'#e2cfb4'],['table','六人餐桌',1800,900,'#d8c2a2'],['roundtable','圆桌',1000,1000,'#e2cfb4'],
     ['chair','餐椅',450,480,'#cfc6b8'],['island','岛台',1800,900,'#e9e5de'],['barstool','吧椅',420,420,'#6b5d4c'],
     ['counter','橱柜台面',1600,600,'#e9e5de'],['stove','燃气灶',750,450,'#dcdcdc'],['ksink','水槽',800,450,'#e1e6ea'],
@@ -668,7 +677,60 @@ function furnSVG(t,w,d,c){
       for (let k=0;k<8;k++) s += `<ellipse cx="0" cy="${-m*.27}" rx="${m*.1}" ry="${m*.21}" transform="rotate(${k*45})" fill="${shade(c,.8)}" ${ST}/>`;
       return s + `<circle r="${m*.1}" fill="#8a6a4a" ${ST}/>`;
     }
+    case 'plaintable':
     case 'table': return rc(x,y,w,d,c,'rx="30"') + rc(x+50,y+50,w-100,d-100,'none','rx="20" opacity=".4"');
+    case 'workbench': {
+      let s = rc(x,y,w,d,c,'rx="25"') + rc(x+w*.03,y+d*.02,w*.94,d*.055,'#64716e');
+      const px = x+w*.1, py = y+d*.24, pw = w*.31, pd = d*.62;
+      s += rc(px,py,pw,pd,'#343b41','rx="18"') + rc(px+pw*.12,py+pd*.15,pw*.76,pd*.66,'#a8b1b7','rx="12"');
+      s += rc(px+pw*.17,py+pd*.1,pw*.07,pd*.75,'#252a2f') + rc(px+pw*.76,py+pd*.1,pw*.07,pd*.75,'#252a2f');
+      s += rc(px+pw*.2,py+pd*.3,pw*.6,pd*.08,'#252a2f') + rc(px+pw*.43,py+pd*.37,pw*.16,pd*.13,'#e5a55a');
+      s += rc(px+pw*.36,py+pd*.51,pw*.28,pd*.2,'#76b5ad','rx="12"');
+      s += rc(x+w*.56,y+d*.32,w*.35,d*.5,'#56736e','rx="18"');
+      for (let i=0;i<3;i++) s += rc(x+w*(.6+i*.085),y+d*.43,w*.025,d*.2,'#de945f','rx="8"') + ln(x+w*(.6125+i*.085),y+d*.43,x+w*(.6125+i*.085),y+d*.36);
+      return s + ln(x+w*.7,y+d*.69,x+w*.84,y+d*.69) + rc(x+w*.69,y+d*.65,w*.035,d*.08,'#bcc5c7');
+    }
+    case 'pegcabinet': {
+      let s = rc(x,y,w,d,c,'rx="15"') + rc(x+w*.025,y+d*.025,w*.95,d*.075,'#64716e');
+      s += ln(x,y+d*.88,x+w,y+d*.88) + ln(0,y+d*.88,0,y+d);
+      s += rc(x+w*.08,y+d*.12,w*.38,d*.28,shade(c,1.1)) + rc(x+w*.55,y+d*.12,w*.37,d*.28,shade(c,1.1));
+      return s + rc(x+w*.15,y+d*.2,w*.12,d*.14,'#80b8b0','rx="8"') + rc(x+w*.66,y+d*.2,w*.14,d*.13,'#d7a474','rx="8"');
+    }
+    case 'paintbench': {
+      let s = rc(x,y,w,d,c,'rx="25"');
+      s += rc(x+w*.43,y+d*.06,w*.53,d*.65,'#c7cfd0','rx="15"') + rc(x+w*.47,y+d*.12,w*.45,d*.12,'#5a656b');
+      for(let i=1;i<7;i++) s += ln(x+w*(.47+i*.064),y+d*.12,x+w*(.47+i*.064),y+d*.24,'opacity=".55"');
+      s += ec(x+w*.70,y+d*.48,w*.075,d*.12,'#69767c') + rc(x+w*.15,y+d*.2,w*.2,d*.22,'#6f9291',`rx="${d*.11}"`);
+      s += rc(x+w*.2,y+d*.18,w*.10,d*.12,'#464e54','rx="10"') + ec(x+w*.3,y+d*.41,w*.025,d*.035,'#f3eee4');
+      s += `<path d="M${x+w*.15} ${y+d*.44}C${x+w*.05} ${y+d*.83},${x+w*.38} ${y+d*.86},${x+w*.39} ${y+d*.6}" fill="none" stroke="#658d92" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+      for(let i=0;i<4;i++) s += ec(x+w*(.59+i*.075),y+d*.85,w*.017,d*.03,['#d28b65','#748ba3','#86a393','#d7bb76'][i]);
+      return s;
+    }
+    case 'modelcabinet': {
+      let s = rc(x,y,w,d,c,'rx="10"') + rc(x+w*.04,y+d*.07,w*.92,d*.84,'#f0ece2');
+      s += rc(x+w*.04,y+d*.88,w*.92,d*.06,'#b9e0e4','fill-opacity=".65"') + ln(0,y+d*.88,0,y+d*.95);
+      s += rc(x+w*.1,y+d*.27,w*.27,d*.3,'#b7c5ce','rx="12"') + ec(x+w*.69,y+d*.44,w*.12,d*.21,'#bd9376');
+      return s + ln(x+w*.12,y+d*.95,x+w*.37,y+d*.8,'opacity=".4"') + ln(x+w*.61,y+d*.95,x+w*.8,y+d*.82,'opacity=".4"');
+    }
+    case 'storagerack': {
+      let s = rc(x,y,w,d,c) + rc(x+w*.035,y+d*.07,w*.93,d*.86,'#d4c3a8');
+      for(const sx of [x,x+w-w*.035]) for(const sy of [y,y+d-d*.08]) s += rc(sx,sy,w*.035,d*.08,'#30393d');
+      s += rc(x+w*.1,y+d*.22,w*.29,d*.56,'#b6c5c1','rx="12"') + rc(x+w*.5,y+d*.22,w*.25,d*.56,'#c59e79');
+      return s + rc(x+w*.79,y+d*.25,w*.1,d*.46,'#72848c','rx="8"');
+    }
+    case 'pegboard': {
+      let s = rc(x,y,w,d,'#313b40','rx="12"') + rc(x+w*.015,y+d*.025,w*.97,d*.95,c,'rx="8"');
+      const cols=Math.max(1,Math.floor(w/65)), rows=Math.max(1,Math.floor(d/65)), r=Math.min(10,d*.12);
+      for(let i=0;i<cols;i++) for(let j=0;j<rows;j++) s += ec(x+w*(i+.5)/cols,y+d*(j+.5)/rows,r,r,'#777d7c','opacity=".8"');
+      return s;
+    }
+    case 'steelcounter': {
+      let s=rc(x,y,w,d,'#cbd2d5','rx="18"') + rc(x+w*.015,y+d*.035,w*.97,d*.04,'#a4afb4');
+      // Brushed steel surface, with the base-cabinet divisions indicated below the front edge.
+      for(let i=0;i<4;i++) s+=ln(x+w*.06,y+d*(.22+i*.14),x+w*.94,y+d*(.22+i*.14),'opacity=".14"');
+      s+=rc(x+w*.018,y+d*.83,w*.964,d*.135,c,'rx="6"') + ln(x+w*.331,y+d*.83,x+w*.331,y+d*.965);
+      return s+ln(x+w*.644,y+d*.83,x+w*.644,y+d*.965) + ln(x+w*.70,y+d*.9,x+w*.91,y+d*.9,'opacity=".5"');
+    }
     case 'roundtable': return ec(0,0,w/2,d/2,c) + ec(0,0,w/2-50,d/2-50,'none','opacity=".4"');
     case 'counter': return rc(x,y,w,d,c) + ln(x,y+d-40,x+w,y+d-40,DASH);
     case 'stove': {
@@ -1021,7 +1083,7 @@ function bindRoomPanel(){
 }
 
 function furnPanel(f){
-  return `<section><h3>${tr('家具属性','Furniture')}</h3>
+  return `${f.type === 'pegboard' ? `<section class="muted">${tr('独立壁挂洞洞板，拖到墙边摆放即可。','Wall-mounted pegboard: place it against a wall.')}</section>` : ''}<section><h3>${tr('家具属性','Furniture')}</h3>
     <div class="form">
       <label class="full">${tr('名称','Name')}<input id="fName" value="${esc(nm(f.name))}"></label>
       <label>${tr('宽','Width')} (mm)<input type="number" id="fW" value="${f.w}" min="50" step="10"></label>
@@ -1321,9 +1383,9 @@ document.addEventListener('keydown', e => {
 /* ======================= 家具库 ======================= */
 function buildLib(){
   $('#lib').innerHTML = LIB.map((c,ci) => `<h4>${nm(c.cat)}</h4><div class="lib-grid">${c.items.map((it,ii) => {
-    const [t,n,w,d,col] = it, pad = Math.max(w,d)*.08;
+    const [t,n,w,d,col] = it, iconD = t === 'pegboard' ? 800 : d, pad = Math.max(w,iconD)*.08;
     return `<div class="item" data-key="${ci}:${ii}" title="${tr('点击添加，或拖到平面图中的指定位置', 'Click to add, or drag onto the plan')}">
-      <svg viewBox="${-w/2-pad} ${-d/2-pad} ${w+2*pad} ${d+2*pad}">${furnSVG(t,w,d,col)}</svg><b>${esc(nm(n))}</b><small>${w}×${d}</small></div>`;
+      <svg viewBox="${-w/2-pad} ${-iconD/2-pad} ${w+2*pad} ${iconD+2*pad}">${furnSVG(t,w,iconD,col)}</svg><b>${esc(nm(n))}</b><small>${w}×${d}</small></div>`;
   }).join('')}</div>`).join('') + `<div class="hint">${tr(
     `家具按真实尺寸（mm）绘制。${COARSE ? '点一下放到画面中央，或按住向右拖到平面图 / 3D 地面上的指定位置（上下滑动为滚动列表）。' : '点击添加到画面中央，或直接拖到平面图 / 3D 地面上。'}添加后可在右侧修改宽深与颜色。`,
     `Furniture is drawn at real size (mm). ${COARSE ? 'Tap to place at the center, or hold and drag right onto the plan / 3D floor (swipe up/down to scroll).' : 'Click to add at the center, or drag onto the plan / 3D floor.'} Edit size and color in the right panel afterwards.`)}</div>`;
@@ -1783,6 +1845,133 @@ function tableLamp(g, x, y, z, s = 1){
 }
 const plate = (g, r, x, y, z) => g.add(lathe([[0, 0], [r*.6, 0], [r*.72, .008], [r, .02]], ceramic({side:THREE.DoubleSide}), x, y, z, 32));
 
+// Perforated panels use real holes and a single mesh, including the cut edges.
+function pegboard(g, w, h, y, z, c){
+  const panel = new THREE.Shape();
+  panel.moveTo(-w/2,0); panel.lineTo(w/2,0); panel.lineTo(w/2,h); panel.lineTo(-w/2,h); panel.closePath();
+  const pitch = .055, cols = Math.floor((w-.07)/pitch), rows = Math.floor((h-.07)/pitch);
+  for (let ix=0;ix<cols;ix++) for (let iy=0;iy<rows;iy++){
+    const hole = new THREE.Path();
+    hole.absarc((ix-(cols-1)/2)*pitch, h/2+(iy-(rows-1)/2)*pitch, .006, 0, Math.PI*2, true);
+    panel.holes.push(hole);
+  }
+  const o = mesh(new THREE.ExtrudeGeometry(panel,{depth:.018,bevelEnabled:false,curveSegments:4}), mat(c,{metalness:.25,roughness:.6}));
+  o.position.set(0,y,z-.009); o.name = 'pegboard'; g.add(o);
+  const frame = blackMetal();
+  [-1,1].forEach(s => g.add(box(.022,h+.022,.026,frame,s*(w/2+.011),y-.011,z)));
+  [y-.022,y+h].forEach(bottom => g.add(box(w+.044,.022,.026,frame,0,bottom,z)));
+}
+
+function screwdriver(g, x, y, z, c){
+  const tool = new THREE.Group(); tool.name = 'screwdriver'; tool.position.set(x,y,z);
+  tool.add(cyl(.016,.019,.09,mat(c,{roughness:.65}),0,0,0,12), cyl(.004,.004,.11,metal(),0,.09,0,8), box(.009,.018,.003,metal(),0,.2,0));
+  g.add(tool); return tool;
+}
+
+function hammer(g, x, y, z){
+  const tool = new THREE.Group(); tool.name = 'hammer'; tool.position.set(x,y,z);
+  tool.add(rbox(.025,.2,.022,woodM('#cfa477'),0,0,0,.006),rbox(.11,.04,.035,metal(),0,.18,0,.006));
+  g.add(tool); return tool;
+}
+
+function pliers(g, x, y, z){
+  const tool = new THREE.Group(); tool.name = 'pliers'; tool.position.set(x,y,z);
+  [-1,1].forEach(s => tool.add(rod([s*.026,0,0],[s*.01,.1,0],.011,mat('#cf7657'),.007),rod([s*.01,.1,0],[s*.024,.15,0],.007,metal(),.005)));
+  tool.add(blob(.012,.012,.008,metal(),0,.09,.004,12)); g.add(tool); return tool;
+}
+
+function printer3D(g, x, top, z){
+  const p = new THREE.Group(); p.name = 'printer3d'; p.position.set(x,top,z);
+  const frame = blackMetal(), rail = metal(), teal = mat('#78b7af',{roughness:.4});
+  p.add(rbox(.55,.07,.46,frame,0,0,0,.015));
+  [-1,1].forEach(s => {
+    p.add(box(.028,.47,.032,frame,s*.215,.07,-.075),cyl(.005,.005,.4,rail,s*.185,.09,-.053,8));
+    p.add(box(.012,.025,.35,rail,s*.11,.095,0));
+  });
+  p.add(box(.46,.035,.04,frame,0,.505,-.075),box(.44,.028,.028,rail,0,.34,-.042));
+  p.add(rbox(.32,.018,.3,mat('#b7c0c4',{metalness:.55,roughness:.4}),0,.125,.025,.005));
+  p.add(box(.3,.004,.28,'#343d43',0,.143,.025),rbox(.07,.065,.055,frame,-.03,.292,-.021,.008));
+  p.add(cyl(.014,.005,.025,mat('#c29a57',{metalness:.7,roughness:.35}),-.03,.267,.0,12));
+  // A small printed part and visible layer lines on the heated bed.
+  p.add(cyl(.043,.055,.08,teal,0,.147,.04,6));
+  for(let i=0;i<5;i++) p.add(cyl(.047-i*.001,.049-i*.001,.002,mat('#5a9b94'),0,.155+i*.013,.04,6));
+  const spool = new THREE.Group(); spool.position.set(.165,.39,.045); spool.name = 'filament-spool';
+  spool.add(rot(cyl(.061,.061,.045,mat('#cda87f'),0,-.0225,0,24),Math.PI/2));
+  [-.03,.03].forEach(sz => { const rim = mesh(new THREE.TorusGeometry(.064,.009,8,28),frame); rim.position.z = sz; spool.add(rim); });
+  spool.add(rot(cyl(.018,.018,.07,rail,0,-.035,0,12),Math.PI/2)); p.add(spool);
+  p.add(tube([[.165,.45,.045],[.08,.48,.05],[-.03,.405,.015],[-.03,.36,.015]],.003,'#ddd5c8',20));
+  p.add(rbox(.11,.045,.075,frame,.16,.025,.18,.008),rot(box(.08,.036,.004,screenMat('#3d9cba'),.16,.045,.219),-.25));
+  g.add(p);
+}
+
+// Small, distinct scale models for the cabinet and spray-booth turntable.
+function displayModel(g, kind, x, y, z, color, scale=1){
+  const p = new THREE.Group(); p.name = 'display-model-'+kind; p.position.set(x,y,z); p.scale.setScalar(scale);
+  const body = mat(color,{roughness:.4}), dark = blackMetal(), silver = metal();
+  if(kind==='robot'){
+    [-1,1].forEach(s => {
+      p.add(rbox(.055,.025,.09,dark,s*.047,0,.012,.007),box(.035,.08,.035,body,s*.047,.025,0));
+      p.add(blob(.021,.021,.021,silver,s*.047,.115,0,12),box(.042,.063,.04,body,s*.047,.12,0));
+      p.add(rbox(.045,.08,.045,body,s*.1,.157,0,.008),box(.035,.025,.035,dark,s*.1,.13,.003));
+    });
+    p.add(rbox(.14,.09,.07,body,0,.16,0,.009),box(.085,.04,.01,mat('#e3d7bd'),0,.18,.04));
+    p.add(rbox(.073,.063,.064,body,0,.257,0,.01),box(.054,.012,.004,glowMat('#82c8ce','#4695ac',.3),0,.284,.034));
+    p.add(box(.009,.04,.009,silver,0,.307,0));
+  } else if(kind==='car'){
+    p.add(rbox(.18,.045,.30,body,0,.029,0,.018),rbox(.14,.055,.15,body,0,.072,-.02,.018));
+    p.add(rot(box(.127,.045,.005,screenMat('#56808c'),0,.078,.06),-.32),box(.09,.012,.005,mat('#e8dfc7'),0,.055,.15));
+    [-1,1].forEach(s => [-.092,.092].forEach(zc => {
+      p.add(rot(cyl(.037,.037,.023,dark,s*.092,.025,zc,18),0,0,Math.PI/2),rot(cyl(.017,.017,.025,silver,s*.094,.025,zc,12),0,0,Math.PI/2));
+    }));
+  } else if(kind==='aircraft'){
+    p.add(rod([0,.055,-.15],[0,.055,.14],.022,body,.009,16),blob(.018,.009,.05,screenMat('#588591'),0,.075,.04,16));
+    const wing = new THREE.Shape();
+    wing.moveTo(-.17,-.045); wing.lineTo(-.025,.065); wing.lineTo(.025,.065); wing.lineTo(.17,-.045); wing.lineTo(.14,-.065); wing.lineTo(-.14,-.065); wing.closePath();
+    const wings = mesh(new THREE.ExtrudeGeometry(wing,{depth:.006,bevelEnabled:false}),body);
+    wings.rotation.x = Math.PI/2; wings.position.y=.056; p.add(wings);
+    p.add(box(.12,.007,.043,body,0,.067,-.113),box(.007,.058,.047,body,0,.06,-.118));
+    [-1,1].forEach(s => p.add(rod([s*.06,.046,-.075],[s*.06,.046,.015],.012,silver,.014,12),box(.013,.025,.013,dark,s*.04,.002,-.035)));
+  } else if(kind==='tank'){
+    [-1,1].forEach(s => {
+      p.add(rbox(.045,.063,.26,dark,s*.105,.0,0,.025));
+      for(let i=0;i<5;i++) p.add(rot(cyl(.019,.019,.048,body,s*.105,.013,-.09+i*.045,12),0,0,Math.PI/2));
+    });
+    p.add(rbox(.18,.062,.21,body,0,.025,0,.013),rbox(.105,.04,.115,body,0,.087,-.016,.008));
+    p.add(rod([0,.107,.033],[0,.107,.18],.008,body,.006,10),cyl(.025,.025,.007,dark,.015,.127,-.027,16));
+  } else if(kind==='rocket'){
+    p.add(cyl(.031,.031,.21,body,0,.018,0,20),cyl(0,.031,.062,mat('#c87860'),0,.228,0,20));
+    for(let i=0;i<3;i++){
+      const fin=rot(box(.05,.065,.008,mat('#c87860'),0,0,0),0,i*Math.PI*2/3);
+      fin.position.set(Math.sin(i*Math.PI*2/3)*.037,.04,Math.cos(i*Math.PI*2/3)*.037); p.add(fin);
+    }
+    p.add(cyl(.033,.036,.018,dark,0,0,0,18),box(.035,.044,.004,screenMat('#6893a0'),0,.157,.032));
+  }
+  g.add(p); return p;
+}
+
+function paintBottle(g,x,y,z,color){
+  const bottle = new THREE.Group(); bottle.name='paint-bottle'; bottle.position.set(x,y,z);
+  bottle.add(cyl(.018,.020,.065,mat(color),0,0,0,16),cyl(.016,.016,.023,blackMetal(),0,.065,0,12),box(.026,.026,.003,'#f0eadf',0,.022,.019));
+  g.add(bottle);
+}
+
+function airCompressor(g,x,y,z){
+  const pump = new THREE.Group(); pump.name='air-compressor'; pump.position.set(x,y,z);
+  const tank=mat('#799e9a',{metalness:.3,roughness:.4}), steel=metal(), dark=blackMetal();
+  pump.add(rot(cyl(.070,.070,.30,tank,0,0,0,24),0,0,Math.PI/2));
+  // Cylinder rotation retains its centre; two short feet support the tank.
+  [-1,1].forEach(s => pump.add(box(.055,.038,.13,dark,s*.095,0,0)));
+  pump.add(rbox(.15,.06,.1,steel,0,.15,0,.01),box(.11,.055,.085,dark,0,.21,0));
+  for(let i=0;i<5;i++) pump.add(box(.145,.003,.105,'#a6afb0',0,.167+i*.008,0));
+  pump.add(box(.018,.06,.018,dark,-.08,.22,0),box(.018,.06,.018,dark,.08,.22,0),box(.18,.017,.018,dark,0,.273,0));
+  const gauge = rot(cyl(.029,.029,.012,steel,0,0,0,20),Math.PI/2); gauge.position.set(.107,.177,.063); pump.add(gauge);
+  const face = rot(cyl(.023,.023,.003,'#f4eee1',0,0,0,20),Math.PI/2); face.position.set(.107,.177,.071); pump.add(face);
+  pump.add(rod([.107,.177,.073],[.119,.19,.073],.0015,'#333b40',.0015,6),box(.016,.026,.024,dark,.16,.113,.035));
+  // Lift the cylindrical tank above the feet.
+  pump.children[0].position.y=.091;
+  g.add(pump);
+}
+
 /* ======================= 家具模型（局部坐标：背面朝 -z） ======================= */
 function buildFurniture(f){
   const g = new THREE.Group(), w = M(f.w), d = M(f.d), c = f.color || '#ddd', bz = -d/2, R = rng(Math.round(f.w*7 + f.d*13 + f.cx + f.cy));
@@ -1980,10 +2169,12 @@ function buildFurniture(f){
       }
       break;
     }
+    case 'plaintable':
     case 'table': {
       const tm = mat(c, {roughness:.4}), lw = woodM(darker(c, .55)), ns = Math.max(1, Math.round(w/.62)), top = .75;
       [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a, b]) => g.add(rod([a*(w/2 - .08), 0, b*(d/2 - .08)], [a*(w/2 - .1), .715, b*(d/2 - .1)], .016, lw, .026)));
       g.add(rbox(w, .035, d, tm, 0, .715, 0, .012), box(w - .22, .07, d - .22, lw, 0, .645));
+      if (f.type === 'plaintable') break;
       g.add(box(w*.7, .003, .32, fabric('#b9a58c'), 0, top, 0));
       for (let i = 0; i < ns; i++) [-1, 1].forEach(s => {
         const x = -w/2 + w/ns*(i + .5), z = s*(d/2 - .17);
@@ -1991,6 +2182,170 @@ function buildFurniture(f){
         g.add(cyl(.03, .026, .1, mat('#dfeef3', {transparent:true, opacity:.35, roughness:.05}), x + .15, top + .003, z - s*.1, 16));
       });
       vase(g, 0, top + .003, 0, .06, .2, '#e9e2d6', R);
+      break;
+    }
+    case 'workbench': {
+      // Model in metres at the catalog size; width/depth edits scale the whole assembly.
+      const frame = blackMetal(), top = .85;
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz]) => {
+        g.add(box(.045,.81,.045,frame,sx*.81,.02,sz*.29),box(.065,.02,.065,'#252a2b',sx*.81,0,sz*.29));
+      });
+      g.add(rbox(1.8,.04,.75,woodM(c),0,.81,0,.01),box(1.64,.06,.035,frame,0,.71,-.29));
+      [-1,1].forEach(s => g.add(box(.04,.055,.61,frame,s*.81,.22,0),box(.035,.85,.035,frame,s*.81,.81,-.345)));
+      g.add(box(1.64,.035,.04,frame,0,.22,-.29));
+      pegboard(g,1.68,.78,.9,-.345,lighter(c,.45));
+      printer3D(g,-.47,top,.06);
+      // Hanging tools on the right, a shallow storage shelf above the printer.
+      [.2,.34,.48].forEach((x,i) => {
+        g.add(rod([x,1.34,-.332],[x,1.34,-.285],.004,metal(),.004,6));
+        screwdriver(g,x,1.15,-.29,['#c97651','#e0ad55','#526f83'][i]);
+      });
+      hammer(g,.67,1.12,-.29); pliers(g,.56,1.47,-.29);
+      g.add(box(.62,.025,.13,woodM(c),-.45,1.54,-.26));
+      [-.62,-.44,-.26].forEach((x,i) => g.add(rbox(.13,.085,.09,mat(['#7c9391','#d1a579','#a4afb5'][i]),x,1.565,-.26,.006)));
+      const toolMat = box(.53,.004,.38,mat('#526e69',{roughness:.95}),.49,top,.075); toolMat.name = 'cutting-mat'; g.add(toolMat);
+      for(let i=1;i<6;i++) g.add(box(.48,.001,.002,'#849a8e',.49,top+.004,-.115+i*.055));
+      const loose = screwdriver(g,.36,top+.025,.14,'#d88d53'); loose.rotation.x = Math.PI/2;
+      const mallet = hammer(g,.58,top+.028,-.01); mallet.rotation.x = Math.PI/2; mallet.rotation.y = -.55;
+      const handTool = pliers(g,.58,top+.028,.14); handTool.rotation.x = Math.PI/2; handTool.rotation.y = .45;
+      g.scale.set(w/1.8,1,d/.75);
+      break;
+    }
+    case 'pegcabinet': {
+      const body = woodM(c), frame = blackMetal();
+      legs(g,1.12,.37,.1,frame,.045,.018);
+      g.add(rbox(1.16,.63,.39,body,0,.1,-.02,.006),rbox(1.2,.04,.45,woodM(lighter(c,.12)),0,.73,0,.006));
+      fronts(g,-.574,.11,1.148,.61,.17,2,1,body,'bar',.57);
+      [-1,1].forEach(s => g.add(box(.028,1.05,.028,frame,s*.55,.77,-.2)));
+      pegboard(g,1.08,.95,.85,-.2,lighter(c,.45));
+      // Peg-mounted display shelves, with small samples and storage boxes.
+      [[-.27,1.13],[.26,1.47]].forEach(([x,y],i) => {
+        g.add(box(.46,.022,.15,woodM(lighter(c,.12)),x,y,-.11));
+        [-1,1].forEach(s => g.add(box(.012,.09,.11,frame,x+s*.17,y-.09,-.13)));
+        if(i===0){
+          g.add(cyl(.048,.068,.13,mat('#79b5ac',{roughness:.5}),x-.08,y+.022,-.1,6),rbox(.105,.08,.09,mat('#d9ad81'),x+.11,y+.022,-.1,.006));
+        } else {
+          ['#879aa5','#d3b692','#758e83'].forEach((col,k) => g.add(rbox(.045,.14+k*.012,.075,mat(col),x-.08+k*.05,y+.022,-.1,.004)));
+        }
+      });
+      g.scale.set(w/1.2,1,d/.45);
+      break;
+    }
+    case 'paintbench': {
+      const frame=blackMetal(), top=.85, booth=mat('#c2ccce',{roughness:.5,metalness:.25});
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz]) => {
+        g.add(box(.045,.79,.045,frame,sx*.72,.02,sz*.30),box(.065,.02,.065,'#252a2b',sx*.72,0,sz*.30));
+      });
+      g.add(rbox(1.6,.04,.75,woodM(c),0,.81,0,.01),box(1.45,.07,.04,frame,0,.70,-.3),box(1.45,.035,.04,frame,0,.22,-.3));
+      [-1,1].forEach(s => g.add(box(.04,.035,.62,frame,s*.72,.22,0)));
+      const spray = new THREE.Group(); spray.name='spray-booth'; spray.position.set(.30,top,-.075);
+      spray.add(rbox(.86,.03,.51,booth,0,0,0,.008),box(.86,.48,.025,booth,0,.03,-.242));
+      [-1,1].forEach(s => spray.add(box(.025,.48,.51,booth,s*.4175,.03,0)));
+      spray.add(box(.86,.025,.51,booth,0,.51,0),box(.70,.37,.005,'#424e53',0,.082,-.227));
+      // Recessed filter grille and a visible overhead light strip.
+      for(let i=0;i<7;i++) spray.add(box(.006,.35,.008,'#6d7c81',-.30+i*.10,.09,-.218));
+      for(let i=0;i<6;i++) spray.add(box(.68,.006,.008,'#6d7c81',0,.095+i*.065,-.216));
+      spray.add(box(.68,.008,.027,glowMat('#fff3d9','#ffe1a9',.7),0,.499,.11));
+      const turntable=cyl(.115,.12,.026,mat('#69767c',{roughness:.4,metalness:.35}),0,.03,.015,32);
+      turntable.name='spray-turntable'; spray.add(turntable);
+      displayModel(spray,'robot',0,.056,.015,'#9ba8ad',.75); g.add(spray);
+      airCompressor(g,-.51,top,-.07);
+      const hose=tube([[-.35,top+.12,-.035],[-.25,top+.045,.09],[-.35,top+.025,.28],[-.65,top+.024,.28],[-.70,top+.027,.13],[-.55,top+.024,.09],[-.42,top+.026,.22],[-.59,top+.026,.26],[-.61,top+.028,.15],[-.42,top+.028,.15],[-.22,top+.09,.24]],.007,mat('#537f87'),64);
+      hose.name='air-hose'; g.add(hose);
+      const airbrush = new THREE.Group(); airbrush.name='airbrush'; airbrush.position.set(-.22,top+.10,.24);
+      airbrush.add(rod([-.06,0,0],[.10,0,0],.009,metal(),.003,12),cyl(.023,.016,.037,metal(),.005,.008,0,18));
+      airbrush.add(box(.009,.017,.014,blackMetal(),-.025,.006,0)); g.add(airbrush);
+      g.add(box(.11,.006,.09,frame,-.22,top,.24),box(.012,.09,.012,frame,-.22,top+.006,.24));
+      const matPad=box(.79,.004,.15,mat('#536c69'),.32,top,.28); matPad.name='paint-mat'; g.add(matPad);
+      ['#c88462','#758da8','#849e88','#d5b36c'].forEach((col,i) => paintBottle(g,.16+i*.11,top+.004,.28,col));
+      g.scale.set(w/1.6,1,d/.75);
+      break;
+    }
+    case 'modelcabinet': {
+      const body=woodM(c), frame=blackMetal(), back=woodM(lighter(c,.35));
+      const glass=mat('#cfe7eb',{transparent:true,opacity:.16,depthWrite:false,roughness:.12,metalness:.05,side:THREE.DoubleSide});
+      legs(g,1.12,.37,.10,frame,.04,.016);
+      g.add(box(1.2,.045,.45,body,0,.10,0),box(1.2,.035,.45,body,0,1.865,0));
+      [-1,1].forEach(s => g.add(box(.024,1.72,.45,body,s*.588,.145,0)));
+      g.add(box(1.152,1.72,.018,back,0,.145,-.216));
+      [.545,.965,1.385].forEach(y => {
+        const shelf=box(1.152,.020,.392,glass,0,y,-.012); shelf.name='glass-shelf'; shelf.castShadow=false; g.add(shelf);
+        [-1,1].forEach(s => g.add(box(.03,.014,.34,frame,s*.55,y-.014,-.025)));
+      });
+      // Eight objects across four illuminated display levels, in five model families.
+      const contents=[['robot','rocket'],['car','aircraft'],['tank','robot'],['aircraft','car']];
+      const colors=[['#a96654','#d8dbd7'],['#d29b55','#9cb6c4'],['#829270','#c2c9ce'],['#c9d2d5','#739eaa']];
+      contents.forEach((types,row) => types.forEach((kind,col) => {
+        const model=displayModel(g,kind,col ? .28 : -.28,.145+row*.42,-.005,colors[row][col]);
+        model.rotation.y = kind==='car' ? .20 : kind==='aircraft' ? -.17 : 0;
+      }));
+      [1.842,.942,1.362].forEach(y => g.add(box(1.105,.008,.018,glowMat('#fff2d9','#ffe2ad',.55),0,y,.15)));
+      [-1,1].forEach(s => {
+        const pane=box(.555,1.695,.006,glass,s*.285,.155,.215);
+        pane.name=s<0 ? 'cabinet-glass-door-left' : 'cabinet-glass-door-right'; pane.castShadow=false; pane.receiveShadow=false; g.add(pane);
+        g.add(box(.012,1.716,.012,frame,s*.568,.149,.215),box(.009,.24,.005,metal(),s*.029,.91,.222));
+      });
+      g.add(box(.012,1.716,.012,frame,0,.149,.215));
+      [.149,1.85].forEach(y => g.add(box(1.152,.016,.012,frame,0,y,.215)));
+      // Narrow translucent streaks make the clear front readable without hiding the models.
+      const sheen=mat('#e1f4f7',{transparent:true,opacity:.12,depthWrite:false,roughness:.2});
+      [-.40,.41].forEach(x => {const p=box(.018,1.35,.001,sheen,x,.30,.219); p.castShadow=false; g.add(p);});
+      g.scale.set(w/1.2,1,d/.45);
+      break;
+    }
+    case 'storagerack': {
+      const frame=mat(c,{roughness:.5,metalness:.45}), board=woodM('#cbb697');
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz]) => {
+        g.add(box(.045,1.775,.045,frame,sx*.5775,.025,sz*.2025),box(.055,.025,.055,'#30383b',sx*.5725,0,sz*.1975));
+      });
+      [.11,.49,.87,1.25,1.63].forEach(y => {
+        const shelf=box(1.155,.022,.405,board,0,y,0); shelf.name='rack-shelf'; g.add(shelf);
+        [-1,1].forEach(s => g.add(box(1.155,.030,.014,frame,0,y-.030,s*.1955)));
+      });
+      [-1,1].forEach(s => g.add(rod([s*.55,.13,-.20],[-s*.55,1.72,-.20],.007,frame,.007,8)));
+      // Storage bins, parcel boxes, books and a toolbox illustrate the usable tiers.
+      [-.29,.27].forEach((x,i) => {
+        const bin=rbox(.43,.26,.30,mat(i ? '#a7b6b3' : '#728e94'),x,.132,-.015,.014); bin.name='storage-bin'; g.add(bin);
+        g.add(box(.44,.012,.31,mat('#bac6c1'),x,.392,-.015),box(.10,.025,.007,'#435a62',x,.33,.137));
+      });
+      [-.31,.24].forEach((x,i) => {
+        const parcel=box(.36,.22-i*.025,.28,mat(i ? '#c9aa82' : '#bc966e'),x,.512,-.012); parcel.name='parcel-box'; g.add(parcel);
+        g.add(box(.040,.003,.283,mat('#e1c699'),x,.732-i*.025,-.012),box(.09,.056,.003,'#e5ddcb',x,.59,.130));
+      });
+      const toolbox=rbox(.40,.17,.27,mat('#5b7177'),-.28,.892,-.005,.012); toolbox.name='toolbox'; g.add(toolbox);
+      g.add(box(.40,.015,.27,frame,-.28,1.047,-.005),box(.14,.018,.02,frame,-.28,1.088,-.005));
+      [-1,1].forEach(s => g.add(box(.018,.027,.02,frame,-.28+s*.061,1.062,-.005)));
+      ['#a1b3b7','#c4b395','#7e9590','#c3cbc7'].forEach((col,i) => g.add(box(.047,.20-i*.012,.21,mat(col),.18+i*.051,.892,0)));
+      ['#c18662','#7b98a9','#d1b776'].forEach((col,i) => paintBottle(g,-.4+i*.09,1.272,.06,col));
+      g.add(rbox(.42,.20,.28,mat('#b1beb8'),.27,1.272,0,.01),box(.16,.035,.003,'#e4e6dc',.27,1.34,.142));
+      g.add(rbox(.39,.125,.28,mat('#8fa6aa'),-.28,1.652,0,.01),rbox(.40,.125,.28,mat('#c9aa87'),.27,1.652,0,.01));
+      g.scale.set(w/1.2,1,d/.45);
+      break;
+    }
+    case 'pegboard': {
+      // Independent wall-mounted panel: bottom about 0.90m, with visible mounting spacers.
+      pegboard(g,1.156,.756,.922,0,c);
+      [-1,1].forEach(sx => [.95,1.65].forEach(y => {
+        g.add(box(.028,.028,.052,blackMetal(),sx*.547,y,-.014));
+        const bolt=rot(cyl(.010,.010,.009,metal(),0,0,0,12),Math.PI/2); bolt.position.set(sx*.547,y+.014,.0355); g.add(bolt);
+      }));
+      g.name='wall-mounted-pegboard';
+      g.scale.set(w/1.2,1,d/.08);
+      break;
+    }
+    case 'steelcounter': {
+      const body=mat(c,{roughness:.55}), steel=mat('#c8cfd2',{metalness:.9,roughness:.30});
+      // A kitchen-height base unit with recessed plinth, two doors and three drawers.
+      g.add(box(1.5,.10,.47,'#60686b',0,0,-.025),box(1.48,.075,.006,steel,0,.008,.213));
+      const cabinet=rbox(1.56,.715,.536,body,0,.10,-.025,.005); cabinet.name='counter-storage-cabinet'; g.add(cabinet);
+      const doors=new THREE.Group(); doors.name='counter-storage-doors';
+      fronts(doors,-.77,.12,1.0,.675,.243,2,1,body,'bar',.65); g.add(doors);
+      const drawers=new THREE.Group(); drawers.name='counter-storage-drawers';
+      fronts(drawers,.23,.12,.54,.675,.243,1,3,body,'bar'); g.add(drawers);
+      const top=rbox(1.6,.035,.60,steel,0,.815,0,.006); top.name='stainless-worktop'; g.add(top);
+      g.add(box(1.58,.020,.009,steel,0,.819,.291));
+      const lip=box(1.6,.055,.018,steel,0,.85,-.291); lip.name='stainless-upstand'; g.add(lip);
+      g.scale.set(w/1.6,1,d/.6);
       break;
     }
     case 'roundtable': {

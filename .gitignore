@@ -23,3 +23,8 @@ tmp/
 # 环境变量
 .env
 .env.*
+
+# Playwright output
+test-results/
+playwright-report/
+tests/artifacts/

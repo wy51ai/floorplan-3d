@@ -2,7 +2,7 @@
 
 中文 | [English](README.en.md)
 
-纯前端的户型装修设计工具：在 2D 平面图上摆放家具、拆改墙体、测量尺寸，一键切换到 Three.js 3D 场景，可以鸟瞰，也可以第一人称漫游。整个应用就是一个 `index.html`，无需构建，打开即用。
+纯前端的户型装修设计工具：在 2D 平面图上摆放家具、拆改墙体、测量尺寸，一键切换到 Three.js 3D 场景，可以鸟瞰，也可以第一人称漫游。平面与 3D 布置仍在 `index.html` 里。户型识别额外使用 `js/` 下的脚本，安装依赖后用本地静态服务器打开。
 
 ## 功能
 
@@ -43,6 +43,22 @@ python3 -m http.server 8000
 ```
 
 > Three.js 通过 jsDelivr CDN 加载，首次打开 3D 场景需要联网。
+
+
+## 户型识别
+
+上传户型图后，在浏览器里做 OCR 和墙体 / 房间 / 门窗识别，生成可编辑户型。右侧「户型」面板还可以贴底图、用两点校准比例、设置北向，并拖动房间边和顶点。
+
+```bash
+npm install
+npm start
+# 访问 http://127.0.0.1:8000
+```
+
+`npm start` 就是 `python3 -m http.server`。识别脚本和中文 OCR 语言包来自 `tesseract.js`，首次识别需要能访问这些本地模型文件（`npm install` 会装好）；3D 场景另需联网加载 Three.js。
+
+`npm test` 跑数据模型和识别单测，`npm run test:e2e` 用 Playwright 覆盖识别、北向和房间边界。
+
 
 ## 快捷键
 

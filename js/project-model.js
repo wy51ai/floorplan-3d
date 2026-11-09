@@ -111,7 +111,7 @@
     const id=v=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(v)&&!['__proto__','constructor','prototype'].includes(v);
     const listOk=(v,n=3000)=>Array.isArray(v)&&v.length<=n;
     const unique=xs=>new Set(xs).size===xs.length;
-    if (Array.isArray(list)) for (const f of list) { if (f?.model != null) { FM.validate(f.model); assert(finite(f.h,1,50000),'AI 模型需有效高度'); } if(f?.modelEvidence!=null) assert(text(f.modelEvidence,2000),'模型依据过长'); }
+    if (Array.isArray(list)) for (const f of list) { if(f?.layer!=null)assert(f.layer==='ceiling','布置图层无效');if(f?.ceilingDrop!=null)assert(finite(f.ceilingDrop,0,10000),'顶面距离无效');if(f?.curtainLength!=null)assert(finite(f.curtainLength,100,10000),'窗帘长度无效'); if (f?.model != null) { FM.validate(f.model); assert(finite(f.h,1,50000),'AI 模型需有效高度'); } if(f?.modelEvidence!=null) assert(text(f.modelEvidence,2000),'模型依据过长'); }
     assert(listOk(list)&&list.every(f=>id(f.id)&&text(f.name,120)&&text(f.type,100)&&/^#[a-fA-F0-9]{3,8}$/.test(f.color)&&['cx','cy'].every(k=>finite(f[k]))&&finite(f.w,1,50000)&&finite(f.d,1,50000)&&(f.h==null||finite(f.h,1,50000))&&finite(f.rot,-36000,36000))&&unique(list.map(f=>f.id)),label||'家具尺寸或编号无效');
   }
   function validateLayoutSchemes(schemes){
@@ -165,6 +165,7 @@
     assert(a.rooms.every(r=>id(r.id)&&text(r.name,120)&&polygonOK(r.poly)&&(!r.at||(r.at.length===2&&r.at.every(v=>finite(v))))&&(!r.source||text(r.source)))&&unique(a.rooms.map(r=>r.id)),'房间轮廓不能交叉，且至少需要三个有效顶点');
     assert(s.rooms&&typeof s.rooms==='object'&&a.rooms.every(r=>s.rooms[r.id]&&text(s.rooms[r.id].name,120)&&['wood','walnut','tile800','tile600','marble','antislip','terrazzo','carpet'].includes(s.rooms[r.id].mat)),'房间名称或地面材料无效');
     validateFurnitureList(s.furniture,'家具尺寸或编号无效');
+    for(const f of s.furniture.filter(f=>f.layer==='ceiling'))assert((f.ceilingDrop||0)+(f.h||100)+(f.curtainLength||0)<=p.height-p.floorFinish,'设备或窗帘超过室内净高，请调整高度');
     if(s.layoutSchemes===undefined) s.layoutSchemes=emptyLayoutSchemes();
     validateLayoutSchemes(s.layoutSchemes);
     assert(list(s.demolished)&&s.demolished.every(id),'拆改记录无效');
@@ -183,6 +184,46 @@
   function inside(x,y,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if(((a[1]>y)!==(b[1]>y))&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c;}return c;}
   function footprint(f){const a=f.rot*Math.PI/180;return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>[f.cx+x*f.w/2*Math.cos(a)-y*f.d/2*Math.sin(a),f.cy+x*f.w/2*Math.sin(a)+y*f.d/2*Math.cos(a)]);}
   function overlap(a,b){for(const p of [a,b])for(let i=0;i<p.length;i++){const q=p[i],r=p[(i+1)%p.length],n=[q[1]-r[1],r[0]-q[0]],pa=a.map(v=>v[0]*n[0]+v[1]*n[1]),pb=b.map(v=>v[0]*n[0]+v[1]*n[1]);if(Math.max(...pa)<=Math.min(...pb)+.01||Math.max(...pb)<=Math.min(...pa)+.01)return false;}return true;}
+  // Exact rotated footprint against solid wall rectangles; touching is allowed.
+  function furniturePlacement(f, architecture, demolished=[]) {
+    const fp=footprint(f);
+    const wall=(architecture.walls||[]).find(w=>!demolished.includes(w[5])&&overlap(fp,[[w[0],w[1]],[w[2],w[1]],[w[2],w[3]],[w[0],w[3]]]));
+    if(wall)return {ok:false,reason:'放不下：家具超出墙间可用空间或与墙体重叠',wallId:wall[5]};
+    return {ok:true};
+  }
+  function resolveFurniturePlacement(f, architecture, demolished=[]) {
+    const walls=(architecture.walls||[]).filter(w=>!demolished.includes(w[5]));
+    const fp=footprint(f), xs=fp.map(p=>p[0]), ys=fp.map(p=>p[1]);
+    const hw=(Math.max(...xs)-Math.min(...xs))/2, hh=(Math.max(...ys)-Math.min(...ys))/2;
+    let tooWide=false;
+    for(const axis of [0,1]){
+      const center=axis===0?f.cx:f.cy, cross=axis===0?f.cy:f.cx;
+      const half=axis===0?hw:hh;
+      const relevant=walls.filter(w=>w[1-axis]<=cross&&w[3-axis]>=cross);
+      const lower=relevant.filter(w=>w[axis+2]<=center).sort((a,b)=>b[axis+2]-a[axis+2])[0];
+      const upper=relevant.filter(w=>w[axis]>=center).sort((a,b)=>a[axis]-b[axis])[0];
+      if(lower&&upper){
+        const gap=upper[axis]-lower[axis+2],excess=2*half-gap;
+        if(excess>.01)tooWide=true;
+      }
+    }
+    if(furniturePlacement(f,architecture,demolished).ok)return {ok:true,cx:f.cx,cy:f.cy,moved:false,message:''};
+    const queue=[{cx:f.cx,cy:f.cy}],seen=new Set(),limit=Math.max(5000,Math.hypot(f.w,f.d)*2);
+    for(let count=0;queue.length&&count<256;count++){
+      queue.sort((a,b)=>Math.hypot(a.cx-f.cx,a.cy-f.cy)-Math.hypot(b.cx-f.cx,b.cy-f.cy));
+      const candidate=queue.shift(),key=`${candidate.cx.toFixed(4)}:${candidate.cy.toFixed(4)}`;
+      if(seen.has(key)){count--;continue;}seen.add(key);
+      const placed={...f,...candidate},poly=footprint(placed);
+      const hits=walls.filter(w=>overlap(poly,[[w[0],w[1]],[w[2],w[1]],[w[2],w[3]],[w[0],w[3]]]));
+      if(!hits.length)return {ok:true,...candidate,moved:true,message:tooWide?'这里放不下啦':'已自动移到墙边'};
+      for(const w of hits){
+        const options=[{cx:w[0]-hw,cy:candidate.cy},{cx:w[2]+hw,cy:candidate.cy},{cx:candidate.cx,cy:w[1]-hh},{cx:candidate.cx,cy:w[3]+hh}];
+        for(const next of options)if(Math.hypot(next.cx-f.cx,next.cy-f.cy)<=limit&&!seen.has(`${next.cx.toFixed(4)}:${next.cy.toFixed(4)}`))queue.push(next);
+      }
+      if(queue.length>1024)queue.length=1024;
+    }
+    return {ok:false,message:'这里放不下啦'};
+  }
   function bboxOf(poly){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];}
   function bboxUnionPoly(a,b){const [ax0,ay0,ax1,ay1]=bboxOf(a),[bx0,by0,bx1,by1]=bboxOf(b);const x0=Math.min(ax0,bx0),y0=Math.min(ay0,by0),x1=Math.max(ax1,bx1),y1=Math.max(ay1,by1);return [[x0,y0],[x1,y0],[x1,y1],[x0,y1]];}
   function mergeRoomNames(a,b){const na=String(a||'').trim(),nb=String(b||'').trim();if(!na)return nb||'合并空间';if(!nb||na===nb)return na;if(na.includes(nb))return na;if(nb.includes(na))return nb;return na+' / '+nb;}
@@ -289,6 +330,6 @@
     });
     return out;
   }
-  root.ProjectModel={clone,uid,KINDS,PRESETS,SCHEME_KEYS,emptyLayoutSchemes,captureLayoutScheme,normalizeLayoutSchemes,normalize,validate,checks,inside,footprint,overlap,polygonOK,sharedRoomEdges,moveRoomBoundary,bboxOf,bboxUnionPoly,mergeRoomNames,roomsAdjacentToWall,deleteWallAndMergeRooms};
+  root.ProjectModel={clone,uid,KINDS,PRESETS,SCHEME_KEYS,emptyLayoutSchemes,captureLayoutScheme,normalizeLayoutSchemes,normalize,validate,checks,inside,footprint,overlap,furniturePlacement,resolveFurniturePlacement,polygonOK,sharedRoomEdges,moveRoomBoundary,bboxOf,bboxUnionPoly,mergeRoomNames,roomsAdjacentToWall,deleteWallAndMergeRooms};
   if(typeof module!=='undefined')module.exports=root.ProjectModel;
 })(globalThis);

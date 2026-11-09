@@ -81,3 +81,14 @@ test('local boundary edit preserves unrelated measured fractional coordinates',(
   assert.deepEqual(moved.slice(0,4),poly.slice(0,4));
   assert.deepEqual(moved[5],[800.25,900.5]);
 });
+test('wall placement uses rotated bounds, permits touching and moves oversized items out of a narrow gap',()=>{
+ const a={walls:[[-100,-3000,0,3000,'n','left'],[1800,-3000,1900,3000,'n','right']]};
+ const f={cx:900,cy:0,w:2000,d:600,rot:0};
+ assert.equal(M.furniturePlacement(f,a).ok,false);
+ const r=M.resolveFurniturePlacement(f,a);assert.equal(r.ok,true);assert.equal(r.message,'这里放不下啦');assert.equal(M.furniturePlacement({...f,cx:r.cx,cy:r.cy},a).ok,true);
+ assert.equal(M.furniturePlacement({...f,w:1800},a).ok,true);
+ assert.equal(M.furniturePlacement({...f,rot:90},a).ok,true);
+ const wall={walls:[[0,-3000,200,3000,'n','w']]};const single={...f,cx:100,w:400};
+ const s=M.resolveFurniturePlacement(single,wall);assert.equal(s.ok,true);assert.equal(Math.abs(s.cx-100),300);assert.equal(M.furniturePlacement({...single,cx:s.cx,cy:s.cy},wall).ok,true);
+ assert.equal(M.furniturePlacement(single,wall,['w']).ok,true);
+});

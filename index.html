@@ -128,15 +128,17 @@ kbd{font:11px ui-monospace,Menlo,monospace;background:#f2ece2;border:1px solid v
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
   padding:8px 16px;border-radius:8px;opacity:0;transition:.25s;pointer-events:none;z-index:10}
 #toast.show{opacity:1;transform:translateX(-50%)}
-/* ---------- 2D / 3D 切换 ---------- */
+/* ---------- 2D / 顶面 / 3D 切换（三档滑块） ---------- */
 .seg{position:relative;padding:3px}
-.seg .btn{position:relative;z-index:1;width:82px;transition:color .45s}
-.seg .btn:hover{background:transparent}
+.seg .btn{position:relative;z-index:1;width:82px;transition:color .45s;background:transparent}
+.seg .btn:hover,.seg .btn.on{background:transparent}
 .seg .pill{position:absolute;left:3px;top:3px;bottom:3px;width:82px;border-radius:6px;background:var(--accent);
   box-shadow:0 2px 6px rgba(181,101,58,.35);transition:transform .5s cubic-bezier(.65,0,.35,1)}
-.seg .btn[data-view="2d"],body.m3d .seg .btn[data-view="3d"]{color:#fff}
-body.m3d .seg .btn[data-view="2d"]{color:var(--ink)}
-body.m3d .seg .pill{transform:translateX(84px)}
+.seg .btn[data-view="2d"]{color:#fff}
+body.ceiling-mode .seg .btn[data-view="2d"],body.m3d .seg .btn[data-view="2d"]{color:var(--ink)}
+body.ceiling-mode .seg #ceilingView,body.m3d .seg .btn[data-view="3d"]{color:#fff}
+body.ceiling-mode .seg .pill{transform:translateX(84px)}
+body.m3d .seg .pill{transform:translateX(168px)}
 body.busy .seg{pointer-events:none}
 body.m3d .only2d,body:not(.m3d) .only3d{display:none!important}
 .only2d,.only3d{animation:fadeIn .45s ease both}
@@ -200,7 +202,8 @@ main.drawer-panel #fab{opacity:0;visibility:hidden}
   .grp{padding:3px;border-radius:10px}
   .btn{padding:8px 12px;min-height:38px;border-radius:8px}
   .seg .btn,.seg .pill{width:92px}
-  body.m3d .seg .pill{transform:translateX(94px)}
+  body.ceiling-mode .seg .pill{transform:translateX(94px)}
+  body.m3d .seg .pill{transform:translateX(188px)}
   .menu summary{padding:9px 14px}
   .menu-pop .btn{padding:11px 14px}
   .item{padding:10px 4px 8px}
@@ -255,9 +258,10 @@ main.drawer-panel #fab{opacity:0;visibility:hidden}
       <button class="btn chip" id="tgPanel" data-en="Properties ◨">属性 ◨</button>
     </div>
     <div class="brand"><b data-en="3BR 2LR 2BA · Interior Design">三室两厅两卫 · 装修设计</b><span id="subtitle">原始户型 1:60 · 尺寸单位 mm</span></div>
-    <div class="grp seg" id="viewSeg" title="切换 2D / 3D (T)" data-en-title="Switch 2D / 3D (T)">
+    <div class="grp seg" id="viewSeg" title="切换 2D / 顶面 / 3D (T)" data-en-title="Switch 2D / Ceiling / 3D (T)">
       <span class="pill"></span>
       <button class="btn" data-view="2d" data-en="2D Plan">2D 平面</button>
+      <button class="btn" id="ceilingView" data-en="Ceiling">顶面布置</button>
       <button class="btn" data-view="3d" data-en="3D Scene">3D 场景</button>
     </div>
     <div class="grp only2d" id="tools">
@@ -534,6 +538,19 @@ const LIB = [
     ['desk','长书桌',1600,700,'#d8c2a2'],['officechair','办公椅',620,620,'#4a4f55'],['bookshelf','大书架',1600,350,'#e2cfb4'],
     ['piano','立式钢琴',1500,600,'#1f1d1b'],['treadmill','跑步机',800,1800,'#3a3a3c'],['armchair','阅读椅',750,800,'#c9a98a']]},
 ];
+const CEILING_LIB = [{cat:'顶面与高位设备',items:[
+ ['ceilinglight','吸顶灯',600,600,'#fff3cc',100],['pendant','吊灯',500,500,'#ead8ac',600],
+ ['bathheater','浴霸',600,300,'#f4f5f6',120],['curtaintrack','窗帘轨道',2400,100,'#d4d9df',80],
+ ['curtainbox','窗帘盒',2400,200,'#f0e8db',150],['acwall','挂式空调',900,250,'#f6f7f8',300]
+]}];
+let ceilingMode = false;
+function setCeilingMode(on){
+  ceilingMode=on; ui.sel=null;
+  document.body.classList.toggle('ceiling-mode',on);
+  $('#ceilingView').classList.toggle('on',on);
+  buildLib();renderAll();
+  $('#tip').textContent=on?'顶面布置：拖入灯具、浴霸、窗帘或挂式空调，选中后编辑安装高度':TIPS()['2d'];
+}
 const typeColor = t => { for (const c of LIB) for (const i of c.items) if (i[0]===t) return i[4]; return '#eee'; };
 
 let _n = 1;
@@ -623,8 +640,20 @@ const undoStack = [], redoStack = [];
 function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); window.ProjectUI?.saved(true); return true; } catch(e) { window.ProjectUI?.saved(false); toast('本机存储空间不足，请立即导出项目备份；当前编辑仍保留在页面中'); return false; } }
 const snap = () => JSON.stringify(state);
 function ensureMeasureIds(){ for (const m of state.measures) if (!m.id) m.id = measureId(); }
-function commit(before){ ensureMeasureIds(); try { ProjectModel.validate(state); } catch(err) { state=JSON.parse(before); syncArchitecture(); toast('修改未保存：'+err.message); return false; } undoStack.push(before); if (undoStack.length > 150) undoStack.shift(); redoStack.length = 0; save(); }
-function mutate(fn){ const b = snap(); fn(); commit(b); renderAll(); }
+function commit(before,checkFurniture=false){ ensureMeasureIds(); try { ProjectModel.validate(state);
+  if(checkFurniture){
+    const previous=JSON.parse(before);
+    for(const f of state.furniture){
+      const old=previous.furniture.find(o=>o.id===f.id);
+      if(old&&['cx','cy','w','d','rot'].every(k=>old[k]===f[k]))continue;
+      const result=ProjectModel.resolveFurniturePlacement(f,state.project.architecture,state.demolished);
+      if(!result.ok){state=previous;syncArchitecture();toast('这里放不下啦');return false;}
+      f.cx=result.cx;f.cy=result.cy;
+      if(result.moved)toast(result.message);
+    }
+  }
+} catch(err) { state=JSON.parse(before); syncArchitecture(); toast('修改未保存：'+err.message); return false; } undoStack.push(before); if (undoStack.length > 150) undoStack.shift(); redoStack.length = 0; save(); return true; }
+function mutate(fn,checkFurniture=false){ const b = snap(); fn(); const result=commit(b,checkFurniture); renderAll(); return result; }
 function undo(){ if (!undoStack.length) return toast(tr('没有可撤销的操作', 'Nothing to undo')); redoStack.push(snap()); state = JSON.parse(undoStack.pop()); ensureMeasureIds(); validateSel(); save(); renderAll(); }
 function redo(){ if (!redoStack.length) return; undoStack.push(snap()); state = JSON.parse(redoStack.pop()); ensureMeasureIds(); validateSel(); save(); renderAll(); }
 function validateSel(){
@@ -682,6 +711,9 @@ const pa = (d,f='none',ex='') => `<path d="${d}" fill="${f}" ${ST} ${ex}/>`;
 const DASH = 'stroke-dasharray="4 3"';
 
 function furnSVG(t,w,d,c,model){
+  if(['ceilinglight','pendant'].includes(t))return ec(0,0,w/2,d/2,c)+ln(-w*.3,0,w*.3,0)+ln(0,-d*.3,0,d*.3);
+  if(t==='bathheater')return rc(-w/2,-d/2,w,d,c)+ec(-w*.22,0,w*.15,d*.3,'#f3c78e')+ec(w*.22,0,w*.15,d*.3,'#d1e2ee');
+  if(['curtaintrack','curtainbox'].includes(t))return rc(-w/2,-d/2,w,d,c)+ln(-w/2,0,w/2,0);
   if (model) return FurnitureModel.top(model,w,d);
   const x = -w/2, y = -d/2, m = Math.min(w,d);
   switch (t){
@@ -796,7 +828,7 @@ function renderRooms(){
 function renderFurn(){
   const g = $('#gFurn');
   g.setAttribute('display', ui.layers.furn ? 'inline' : 'none');
-  g.innerHTML = state.furniture.map(f => {
+  g.innerHTML = state.furniture.filter(f => ceilingMode ? f.layer==='ceiling' : f.layer!=='ceiling').map(f => {
     const fs = Math.max(80, Math.min(170, Math.min(f.w,f.d)*.2));
     const label = Math.min(f.w,f.d) >= 380 && !NOLABEL.includes(f.type)
       ? `<text transform="rotate(${-f.rot})" font-size="${fs}" text-anchor="middle" dominant-baseline="central" fill="#4a443c" opacity=".8" pointer-events="none">${esc(nm(f.name))}</text>` : '';
@@ -1411,10 +1443,10 @@ function renderFab(){
 }
 
 function clearLayout(){
-  const n = state.furniture.length;
+  const n = state.furniture.filter(f=>ceilingMode?f.layer==='ceiling':f.layer!=='ceiling').length;
   if (!n) return toast(tr('当前没有布置任何家具', 'There is no furniture to clear'));
-  if (!confirm(tr(`确定清空全部 ${n} 件家具 / 家电吗？\n墙体、地面材料和测量线会保留，可点「撤销」恢复。`, `Remove all ${n} furniture / appliance items?\nWalls, flooring and measurements are kept. You can Undo this.`))) return;
-  ui.sel = null; mutate(() => state.furniture = []);
+  if (!confirm(tr(`确定清空${ceilingMode?'顶面':'地面'}的 ${n} 件家具 / 设备吗？\n墙体、地面材料和测量线会保留，可点「撤销」恢复。`, `Remove all ${n} furniture / appliance items?\nWalls, flooring and measurements are kept. You can Undo this.`))) return;
+  ui.sel = null; mutate(() => state.furniture = state.furniture.filter(f=>ceilingMode?f.layer!=='ceiling':f.layer==='ceiling'));
   toast(tr('已清空布置，可点「撤销」恢复', 'Layout cleared — Undo to restore'));
 }
 
@@ -1478,8 +1510,10 @@ function bindRoomPanel(){
 }
 
 function furnPanel(f){
-  return `<section><h3>${tr('家具属性','Furniture')}</h3>
+  const ceiling=f.layer==='ceiling';
+  return `<section><h3>${ceiling?'顶面 / 高位设备':tr('家具属性','Furniture')}</h3>
     <div class="form">
+      ${ceiling?`<label class="full">设备顶部距天花板 (mm)<input id="fDrop" type="number" min="0" value="${f.ceilingDrop||0}"></label>${['curtaintrack','curtainbox'].includes(f.type)?`<label class="full">帘布垂下长度 (mm)<input id="fCurtain" type="number" min="100" value="${f.curtainLength||2000}"></label>`:''}`:''}
       <label class="full">${tr('名称','Name')}<input id="fName" maxlength="120" value="${esc(nm(f.name))}"></label>
       <label>${tr('宽','Width')} (mm)<input type="number" id="fW" value="${f.w}" min="50" step="10"></label>
       <label>${tr('深','Depth')} (mm)<input type="number" id="fD" value="${f.d}" min="50" step="10"></label>
@@ -1499,8 +1533,10 @@ function furnPanel(f){
   <section class="muted" style="font-size:12px">${tr('拖动家具移动；拖动上方圆点旋转；拖动右下角方块调整尺寸。开启「贴墙吸附」后靠近墙面会自动贴齐。', 'Drag to move; drag the top dot to rotate; drag the bottom-right square to resize. With "Wall snap" on, items snap flush to nearby walls.')}</section>`;
 }
 function bindFurnPanel(f){
-  const upd = (fn) => mutate(() => { const g = getF(f.id); if (g) fn(g); });
+  const upd = (fn) => mutate(() => { const g = getF(f.id); if (g) fn(g); },true);
   const num = (id, fn) => $(id).onchange = e => { const v = parseFloat(e.target.value); if (!isNaN(v)) upd(g => fn(g, v)); };
+  if($('#fDrop'))num('#fDrop',(g,v)=>g.ceilingDrop=Math.max(0,Math.round(v)));
+  if($('#fCurtain'))num('#fCurtain',(g,v)=>g.curtainLength=Math.max(100,Math.round(v)));
   $('#fName').onchange = e => upd(g => g.name = e.target.value.trim() || g.name);
   num('#fW', (g,v) => g.w = Math.max(50, Math.round(v)));
   num('#fD', (g,v) => g.d = Math.max(50, Math.round(v)));
@@ -1536,7 +1572,7 @@ function bindMeasurePanel(){
 
 /* ======================= 操作 ======================= */
 function select(sel){ ui.sel = sel; renderMeasure(); renderSel(); renderPanel(); }
-function rotateSel(d){ if (ui.sel?.kind==='furn') mutate(() => { const f = getF(ui.sel.id); f.rot = norm(f.rot + d); }); }
+function rotateSel(d){ if (ui.sel?.kind==='furn') mutate(() => { const f = getF(ui.sel.id); f.rot = norm(f.rot + d); },true); }
 function deleteWallById(id, {confirm: needConfirm = true} = {}){
   if (!canEditPlan()){ toast(tr('请到「户型」页编辑墙体', 'Switch to Floorplan to edit walls')); return false; }
   if (!ui.wallEdit){ toast(tr('请先开启「墙体编辑」', 'Turn on Wall edit first')); return false; }
@@ -1596,7 +1632,7 @@ function deleteSel(){
 function duplicateSel(){
   if (ui.sel?.kind !== 'furn') return;
   const f = getF(ui.sel.id), n = {...f, id:uid(), cx:f.cx+200, cy:f.cy+200};
-  ui.sel = {kind:'furn', id:n.id}; mutate(() => state.furniture.push(n));
+  ui.sel = {kind:'furn', id:n.id}; mutate(() => state.furniture.push(n),true);
 }
 // 新放下的家具若压在墙 / 窗上，沿穿透较浅的方向推出来，刚好贴墙
 function pushOut(f){
@@ -1629,27 +1665,16 @@ function nearestRoomCenter(x, y){
 }
 function addItem(it, x, y){
   const [type,name,w,d,color] = it, f = F(type,name,Math.round(x/10)*10,Math.round(y/10)*10,w,d,0,color);
+  if (ceilingMode){f.layer='ceiling';f.ceilingDrop=type==='acwall'?200:0;if(['curtaintrack','curtainbox'].includes(type))f.curtainLength=Math.max(100,state.project.height-state.project.floorFinish-(it[5]||100)-20);}
   if (it[5]) f.h = it[5];
   if (it[6]?.model) f.model = structuredClone(it[6].model);
   if (it[6]?.evidence) f.modelEvidence = it[6].evidence;
-  pushOut(f);
-  // AI placement rejects wall/out-of-room results; manual drop used to keep the ejected
-  // coordinates, so items vanished off-plan (or under thick wall fills). Snap back in.
-  if (ROOMS.length && !furnInAnyRoom(f)){
-    const room = nearestRoomCenter(x, y);
-    if (room){
-      f.cx = Math.round(room.cx / 10) * 10;
-      f.cy = Math.round(room.cy / 10) * 10;
-      pushOut(f);
-      if (!furnInAnyRoom(f)){
-        f.cx = Math.round(room.cx / 10) * 10;
-        f.cy = Math.round(room.cy / 10) * 10;
-      }
-    }
-  }
+  const placement=ProjectModel.resolveFurniturePlacement(f,state.project.architecture,state.demolished);
+  if(!placement.ok){toast(placement.message);return false;}
+  f.cx=placement.cx;f.cy=placement.cy;
   ui.sel = {kind:'furn', id:f.id};
-  mutate(() => type==='rug' ? state.furniture.unshift(f) : state.furniture.push(f));
-  toast(tr(`已添加「${name}」${w}×${d}`, `Added "${nm(name)}" ${w}×${d}`));
+  if(mutate(() => type==='rug' ? state.furniture.unshift(f) : state.furniture.push(f),true)===false){validateSel();renderAll();return false;}
+  toast(placement.moved ? placement.message : tr(`已添加「${name}」${w}×${d}`, `Added "${nm(name)}" ${w}×${d}`));
 }
 function toggleWall(id){
   const w = WALLS.find(w => w[5] === id);
@@ -1836,7 +1861,7 @@ function endDrag(cancel){
     }
     if (w) state.project.custom = true;
   }
-  if (d.moved){ commit(d.before); renderAll(); }
+  if (d.moved){ commit(d.before,['move','rot','size'].includes(d.kind)); renderAll(); }
 }
 
 svg.addEventListener('pointerdown', e => {
@@ -2122,7 +2147,7 @@ document.addEventListener('keydown', e => {
   }
   else if (k.startsWith('arrow') && ui.sel?.kind === 'furn'){
     e.preventDefault(); const st = e.shiftKey ? 100 : 10;
-    mutate(() => { const f = getF(ui.sel.id); if (k==='arrowleft') f.cx -= st; if (k==='arrowright') f.cx += st; if (k==='arrowup') f.cy -= st; if (k==='arrowdown') f.cy += st; });
+    mutate(() => { const f = getF(ui.sel.id); if (k==='arrowleft') f.cx -= st; if (k==='arrowright') f.cx += st; if (k==='arrowup') f.cy -= st; if (k==='arrowdown') f.cy += st; },true);
   }
   else if (k === '+' || k === '=') zoomCenter(1.25);
   else if (k === '-') zoomCenter(.8);
@@ -2130,7 +2155,7 @@ document.addEventListener('keydown', e => {
 
 /* ======================= 家具库 ======================= */
 function buildLib(){
-  $('#lib').innerHTML = `<div class="catalog-toolbar"><button class="btn primary" onclick="FurnitureLibrary.open()">编辑家具库</button><button class="btn" onclick="FurnitureLibrary.add()">＋ 新增</button></div>` + LIB.map((c,ci) => `<h4>${esc(nm(c.cat))}</h4><div class="lib-grid">${c.items.map((it,ii) => {
+  $('#lib').innerHTML = `<div class="catalog-toolbar"><span>${ceilingMode?'顶面与高位设备':'地面家具'}</span><button class="btn primary" onclick="FurnitureLibrary.open()">编辑家具库</button><button class="btn" onclick="FurnitureLibrary.add()">＋ 新增</button></div>` + (ceilingMode?CEILING_LIB:LIB).map((c,ci) => `<h4>${esc(nm(c.cat))}</h4><div class="lib-grid">${c.items.map((it,ii) => {
     const [t,n,w,d,col] = it, pad = Math.max(w,d)*.08;
     return `<div class="item" data-key="${ci}:${ii}" title="${tr('点击添加，或拖到平面图中的指定位置', 'Click to add, or drag onto the plan')}">
       <svg viewBox="${-w/2-pad} ${-d/2-pad} ${w+2*pad} ${d+2*pad}">${furnSVG(t,w,d,col,it[6]?.model)}</svg><b>${esc(nm(n))}</b><small>${w}×${d}${it[5] ? `×${it[5]}` : ''} mm</small></div>`;
@@ -2142,7 +2167,7 @@ function buildLib(){
     libDrag = {el, id:e.pointerId, sx:e.clientX, sy:e.clientY, it:itemOf(el), ghost:null};
   }));
 }
-const itemOf = el => { const [ci, ii] = el.dataset.key.split(':').map(Number); return LIB[ci].items[ii]; };
+const itemOf = el => { const [ci, ii] = el.dataset.key.split(':').map(Number); return (ceilingMode?CEILING_LIB:LIB)[ci].items[ii]; };
 
 // 家具库拖放：用 pointer 事件实现（iPad 上 HTML5 拖放不可靠）。
 // 列表设置了 touch-action:pan-y，竖向滑动交给浏览器滚动（会触发 pointercancel），横向拖动才开始拖放。
@@ -2240,18 +2265,23 @@ const TIPS = () => {
   };
 };
 async function setView(m){
-  if (m === viewMode || switching) return;
+  if (!m || m === viewMode || switching) return;
   window.ProjectUI?.cancelPlacement();
   if (!window.View3D) return toast(tr('3D 引擎仍在加载或加载失败（需要联网加载 three.js）', '3D engine is still loading or failed to load (three.js needs a network connection)'));
   switching = true; document.body.classList.add('busy');
   viewMode = m;
-  if (m === '3d'){ if (ui.tool !== 'select') setTool('select'); ui.mA = null; document.body.classList.add('m3d'); await window.View3D.enter(); }
-  else { document.body.classList.remove('m3d'); await window.View3D.exit(); applyView(); }
+  if (m === '3d'){
+    if (ceilingMode) setCeilingMode(false);
+    if (ui.tool !== 'select') setTool('select'); ui.mA = null;
+    document.body.classList.add('m3d'); await window.View3D.enter();
+  } else {
+    document.body.classList.remove('m3d'); await window.View3D.exit(); applyView();
+  }
   $('#tip').textContent = TIPS()[m];
   switching = false; document.body.classList.remove('busy');
 }
 document.querySelectorAll('.menu-pop .btn').forEach(b => b.addEventListener('click', () => b.closest('details').open = false));
-document.querySelectorAll('#viewSeg .btn').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.querySelectorAll('#viewSeg [data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
 
 document.querySelectorAll('#tools [data-tool]').forEach(b => b.onclick = () => setTool(b.dataset.tool));
 $('#wallEdit').onclick = () => {
@@ -2336,6 +2366,12 @@ $('#schemeBar')?.addEventListener('click', e => {
   switchLayoutScheme(slotBtn.dataset.scheme);
 });
 
+$('#ceilingView').onclick=async()=>{
+  if(is3D())await setView('2d');
+  document.querySelector('#projectNav [data-workspace="layout"]')?.click();
+  setCeilingMode(true);
+};
+$('#viewSeg [data-view="2d"]').addEventListener('click',()=>setCeilingMode(false));
 applyStaticLang(); syncFullscreen();
 syncArchitecture(); buildDefs(); buildLib(); renderOpenings(); renderDims();
 $('#tip').textContent = TIPS()['2d'];
@@ -2445,12 +2481,12 @@ function init(){
     const f = getF(fdrag.id), g = groundAt(e.clientX, e.clientY); if (!f || !g) return;
     fdrag.moved = true; cv.style.cursor = 'grabbing';
     [f.cx, f.cy] = snapMove(f, g.x - fdrag.ox, g.y - fdrag.oy);
-    furnG.children.find(o => o.userData.fid === f.id)?.position.set(wx(f.cx), 0, wz(f.cy));   // 拖动中只挪模型，松手再整体同步
+    const movedObject=furnG.children.find(o => o.userData.fid === f.id);if(movedObject){movedObject.position.x=wx(f.cx);movedObject.position.z=wz(f.cy);}   // 拖动中只挪模型，松手再整体同步
   });
   const endF = e => {
     if (!fdrag || e.pointerId !== fdrag.pid) return;
     const d = fdrag; fdrag = null; orbit.enabled = true; cv.style.cursor = '';
-    if (d.moved){ commit(d.before); renderAll(); }
+    if (d.moved){ if(e.type==='pointercancel')state=JSON.parse(d.before);else commit(d.before,true); renderAll(); }
   };
   cv.addEventListener('pointerup', endF); cv.addEventListener('pointercancel', endF);
 
@@ -2646,6 +2682,9 @@ function buildFurniture(f){
       const partMesh=new THREE.Mesh(geometry,material);partMesh.name=part.name;sh(partMesh);g.add(partMesh);
     }
   } else switch (f.type){
+    case 'ceilinglight':case 'pendant':g.add(cyl(Math.min(w,d)/2,Math.min(w,d)/2,.1,mat(c,{emissive:c,emissiveIntensity:.25}),0,0,0));break;
+    case 'bathheater':g.add(box(w,.12,d,c),box(w*.65,.01,d*.6,'#d9b382',0,0,0));break;
+    case 'curtaintrack':case 'curtainbox':g.add(box(w,.08,d,c));break;
     case 'bed': {
       const fr = woodM('#8d7258'), fab = fabric(c), fh = .3, mt = .22, top = fh + mt, n = Math.max(3, Math.round(w/.28)), sw = (w - .04)/n;
       g.add(box(w - .12, .06, d - .14, '#4a3e33', 0, 0, .03), rbox(w, fh - .06, d - .08, fr, 0, .06, .04, .015));        // 内缩踢脚 + 床箱
@@ -3131,7 +3170,19 @@ function buildFurniture(f){
       g.scale.y = M(f.h) / height;
     }
   }
-  g.position.set(wx(f.cx), 0, wz(f.cy));
+  let baseY=0;
+  if(f.layer==='ceiling'){
+    const height=M(f.h||100),top=H-M(f.ceilingDrop||0);
+    baseY=top-height;
+    if(['curtaintrack','curtainbox'].includes(f.type)){
+      // Curtain belongs to the same group but is positioned below its track.
+      const length=M(f.curtainLength||2000),scale=g.scale.y||1;
+      const cloth=new THREE.Group();const n=Math.max(8,Math.ceil(w/.12));
+      for(let i=0;i<n;i++)cloth.add(box(w/n*.96,length,.025,fabric('#d1c4af'),-w/2+w/n*(i+.5),-length,(i%2?.025:-.025)));
+      cloth.scale.y=1/scale;g.add(cloth);
+    }
+  }
+  g.position.set(wx(f.cx), baseY, wz(f.cy));
   g.rotation.y = -f.rot * Math.PI/180;       // 平面顺时针旋转 → 绕 Y 轴负向
   g.userData.fid = f.id;
   return g;
@@ -3257,7 +3308,7 @@ function sync(force){
   if(opt.cut!==1.2)opt.cut=H;
   if (!inited || (!active && !force)) return;
   orbit.maxDistance=Math.max(45,Math.max(BOUNDS.w,BOUNDS.h)/1000*2);
-  const a = JSON.stringify([state.project.architecture,state.project.height,state.project.floorFinish,state.project.windowInfo,state.project.points,state.rooms, state.demolished, opt.cut]), f = JSON.stringify(state.furniture), l = JSON.stringify([state.project.architecture.rooms,state.project.points,state.rooms, opt.cut]);
+  const a = JSON.stringify([state.project.architecture,state.project.height,state.project.floorFinish,state.project.windowInfo,state.project.points,state.rooms, state.demolished, opt.cut]), f = JSON.stringify([state.furniture,state.project.height,state.project.floorFinish]), l = JSON.stringify([state.project.architecture.rooms,state.project.points,state.rooms, opt.cut]);
   if (force || a !== sigArch){ sigArch = a; buildArch(); }
   if (force || f !== sigFurn){ sigFurn = f; buildFurn(); }
   if (force || l !== sigLabels){ sigLabels = l; buildLabels(); }

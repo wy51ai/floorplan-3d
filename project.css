@@ -119,3 +119,6 @@ body[data-workspace="layout"] #schemeBar:not([hidden]){display:flex}
 .catalog-dialog .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.catalog-dialog input[type=color]{height:36px;padding:3px}
 @media(max-width:600px){.catalog-dialog .p-grid{grid-template-columns:1fr}}
 .catalog-model-info{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:#f7fafc}.catalog-model-info h3{margin:0;font-size:14px}.catalog-model-preview{height:230px;background:linear-gradient(#edf3f8,#fff);border-radius:6px}.catalog-model-preview svg{width:100%;height:100%;display:block}.catalog-model-info input[type=range]{padding:0}.catalog-model-info ul{font-size:12px;color:var(--muted);padding-left:20px}
+body.ceiling-mode #gRooms{opacity:.55}body.ceiling-mode #gFurn{filter:drop-shadow(0 1px 1px #246b9a33)}
+body.ceiling-mode .catalog-toolbar button{display:none}
+/* 顶面档位与 2D/3D 共用 #viewSeg 滑块高亮，不再单独铺底色 */

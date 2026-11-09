@@ -185,6 +185,7 @@
   }
   function render(){
     document.body.dataset.workspace=tab;
+
     nav.querySelectorAll('[data-workspace]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.workspace===tab)));
     const p=state.project;
     document.querySelector('.brand b').textContent=p.name;
@@ -246,6 +247,7 @@
     cancelPlacement();
     const next=b.dataset.workspace;
     tab=next;selected=null;ui.sel=null;
+    if(tab!=='layout'&&ceilingMode){ceilingMode=false;document.body.classList.remove('ceiling-mode');$('#ceilingView').classList.remove('on');buildLib();}
     document.body.dataset.workspace=tab;
     if(tab!=='site'&&typeof leavePlanEditMode==='function')leavePlanEditMode();
     if(tab!=='layout'&&window.AiLayout?.isOpen())window.AiLayout.close({silent:true});

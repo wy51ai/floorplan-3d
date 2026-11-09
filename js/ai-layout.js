@@ -175,12 +175,7 @@
   }
 
   function wallHit(f) {
-    const fp = M.footprint(f);
-    const walls = state.project.architecture.walls || WALLS;
-    return walls.some(w => {
-      if (state.demolished.includes(w[5])) return false;
-      return M.overlap(fp, [[w[0], w[1]], [w[2], w[1]], [w[2], w[3]], [w[0], w[3]]]);
-    });
+    return !M.furniturePlacement(f,state.project.architecture,state.demolished).ok;
   }
 
   function furnOverlap(f, others) {
@@ -684,11 +679,13 @@
 
       // Single undoable commit: replace furniture with planned set
       mutate(() => {
+        const ceilingItems=state.furniture.filter(f=>f.layer==='ceiling');
         state.furniture = plan.items.map(f => {
           if (f.type === 'rug') return f;
           return f;
         });
         // rugs first for draw order
+        state.furniture.push(...ceilingItems);
         const rugs = state.furniture.filter(f => f.type === 'rug');
         const rest = state.furniture.filter(f => f.type !== 'rug');
         state.furniture = rugs.concat(rest);

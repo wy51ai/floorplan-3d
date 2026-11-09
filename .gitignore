@@ -19,7 +19,25 @@ build/
 npm-debug.log*
 .cache/
 tmp/
+*.tmp
 
-# 环境变量
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# 环境变量 / 本地密钥
 .env
 .env.*
+!.env.example
+credentials.json
+*.pem
+
+# 浏览器测试输出
+/test-results/
+/playwright-report/
+/blob-report/
+/tests/artifacts/
+/tests/initial.png

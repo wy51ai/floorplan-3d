@@ -1,0 +1,37 @@
+const {test,expect}=require('@playwright/test');
+test('provider profiles preserve independent drafts, credentials, models and active selection',async({page})=>{
+  await page.goto('/');await page.locator('#aiSettingsOpen').click();
+  await page.locator('#aiBaseUrl').fill('https://openai.example/v1');
+  await page.locator('#aiApiKey').fill('openai-test-key');
+  await page.locator('#aiModel').fill('vision-model');
+  await page.locator('#aiProvider').selectOption('deepseek');
+  await expect(page.locator('#aiBaseUrl')).toHaveValue('https://api.deepseek.com');
+  expect(await page.evaluate(()=>AiConfig.load().apiKey)).toBe('');
+  await page.locator('#aiBaseUrl').fill('https://deepseek.example/v1');
+  await page.locator('#aiApiKey').fill('deepseek-test-key');
+  await page.locator('#aiModel').fill('text-model');
+  await page.locator('#aiCfgSave').click();
+  await page.locator('#aiProvider').selectOption('openai');
+  await expect(page.locator('#aiBaseUrl')).toHaveValue('https://openai.example/v1');
+  await expect(page.locator('#aiModel')).toHaveValue('vision-model');
+  expect(await page.evaluate(()=>AiConfig.load().apiKey)).toBe('openai-test-key');
+  await page.reload();expect(await page.evaluate(()=>AiConfig.load().provider)).toBe('openai');
+  await page.locator('#aiSettingsOpen').click();await page.locator('#aiProvider').selectOption('deepseek');
+  await expect(page.locator('#aiModel')).toHaveValue('text-model');
+  await page.locator('#aiCfgClear').click();
+  expect(await page.evaluate(()=>AiConfig.load('deepseek').apiKey)).toBe('');
+  expect(await page.evaluate(()=>AiConfig.load('openai').apiKey)).toBe('openai-test-key');
+  await page.evaluate(()=>{AiConfig.save({provider:'openai',modelIds:['vision-model']});AiConfig.switchProvider('deepseek');});
+  expect(await page.evaluate(()=>AiConfig.load().modelIds)).toEqual([]);
+  expect(await page.evaluate(()=>AiConfig.load('openai').modelIds)).toEqual(['vision-model']);
+});
+test('legacy single configuration migrates without sharing its key with another provider',async({page})=>{
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.setItem(AiConfig.STORAGE_KEY,JSON.stringify({provider:'deepseek',baseUrl:'https://legacy.example/v1',apiKey:'legacy-test',model:'legacy-model',modelIds:['legacy-model']})));
+  await page.reload();
+  expect(await page.evaluate(()=>AiConfig.load().model)).toBe('legacy-model');
+  await page.evaluate(()=>AiConfig.switchProvider('openai'));
+  expect(await page.evaluate(()=>AiConfig.load().apiKey)).toBe('');
+  await page.evaluate(()=>AiConfig.switchProvider('deepseek'));
+  expect(await page.evaluate(()=>AiConfig.load().apiKey)).toBe('legacy-test');
+});

@@ -1,0 +1,77 @@
+const { test, expect } = require('@playwright/test');
+const image = { name:'front.png', mimeType:'image/png', buffer:require('node:fs').readFileSync(require('node:path').join(__dirname,'fixtures/user-floorplan.png')) };
+test('shared settings, multi-image recognition, catalog editing, placement and persistent deletion', async({page})=>{
+  const errors=[], requests=[]; page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/mock-ai/chat/completions',async route=>{
+    requests.push(route.request().postDataJSON());
+    await route.fulfill({json:{choices:[{message:{content:JSON.stringify({name:'测试多图沙发',type:'sofa',unit:'mm',length:2100,width:900,height:850,estimated:true,evidence:'正面与侧面综合估算'})},finish_reason:'stop'}]}});
+  });
+  await page.goto('/');
+  await page.locator('#aiSettingsOpen').click();
+  await expect(page.locator('#aiSettingsDialog')).toBeVisible();
+  await page.locator('#aiBaseUrl').fill('http://127.0.0.1:8000/mock-ai');
+  await page.locator('#aiApiKey').fill('test-only');
+  await page.locator('#aiCfgSave').click(); await page.locator('#aiCfgBack').click();
+  await page.evaluate(()=>FurnitureLibrary.add());
+  await page.locator('#catalogImages').setInputFiles([image,{...image,name:'side.png'}]);
+  await expect(page.locator('#catalogPreviews img')).toHaveCount(2);
+  await page.locator('#catalogRecognize').click();
+  await expect(page.locator('#catalogName')).toHaveValue('测试多图沙发');
+  await expect(page.locator('#catalogH')).toHaveValue('850');
+  await expect(page.locator('#catalogStatus')).toContainText('AI 估算');
+  expect(requests[0].messages[1].content.filter(p=>p.type==='image_url')).toHaveLength(2);
+  await page.locator('#catalogSave').click();
+  await page.getByRole('button',{name:'编辑 测试多图沙发',exact:true}).click();
+  await page.locator('#catalogH').fill('880');await page.locator('#catalogSave').click();
+  await page.locator('#catalogClose').click();
+  await page.reload();
+  await page.evaluate(()=>{ const item=LIB.flatMap(c=>c.items).find(i=>i[1]==='测试多图沙发'); addItem(item,7600,8950); });
+  expect(await page.evaluate(()=>state.furniture.at(-1).h)).toBe(880);
+  await page.evaluate(()=>FurnitureLibrary.open());
+  page.once('dialog',d=>d.accept());
+  await page.getByRole('button',{name:'删除 测试多图沙发',exact:true}).click();
+  await expect(page.getByRole('button',{name:'编辑 测试多图沙发',exact:true})).toHaveCount(0);
+  await page.reload();
+  expect(await page.evaluate(()=>LIB.flatMap(c=>c.items).some(i=>i[1]==='测试多图沙发'))).toBe(false);
+  expect(await page.evaluate(()=>state.furniture.some(i=>i.name==='测试多图沙发'&&i.h===880))).toBe(true);
+  expect(errors).toEqual([]);
+});
+test('malformed responses preserve manual draft; missing dimensions stay empty', async({page})=>{
+  await page.goto('/');
+  const parsed=await page.evaluate(()=>FurnitureCatalog.parseResult('{"unit":"mm","length":null,"width":400,"height":null}'));
+  expect(parsed.w).toBe(null); expect(parsed.h).toBe(null); expect(parsed.estimated).toBe(true);
+  await page.route('**/mock-ai/chat/completions',r=>r.fulfill({json:{choices:[{message:{content:'not JSON'},finish_reason:'stop'}]}}));
+  await page.evaluate(()=>{AiConfig.save({baseUrl:location.origin+'/mock-ai',apiKey:'test'});FurnitureLibrary.add();});
+  await page.locator('#catalogName').fill('手动草稿');
+  await page.locator('#catalogImages').setInputFiles(image);
+  await expect(page.locator('#catalogPreviews img')).toHaveCount(1);
+  await page.locator('#catalogRecognize').click();
+  await expect(page.locator('#catalogStatus')).toContainText('未返回有效');
+  await expect(page.locator('#catalogName')).toHaveValue('手动草稿');
+  await expect(page.locator('#catalogSave')).toBeEnabled();
+});
+test('catalog and settings fit a phone viewport',async({page})=>{
+  await page.setViewportSize({width:390,height:844}); await page.goto('/');
+  await page.evaluate(()=>FurnitureLibrary.add());
+  expect(await page.locator('#furnitureLibraryDialog').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  await page.locator('#catalogSettings').click();
+  await expect(page.locator('#aiSettingsDialog')).toBeVisible();
+  await page.locator('#aiCfgBack').click();
+  await expect(page.locator('#catalogName')).toBeVisible();
+});
+test('cancel a pending recognition without losing the editor',async({page})=>{
+  await page.goto('/');
+  await page.evaluate(()=>{
+    AiConfig.save({apiKey:'test'});
+    AiClient.chatCompletions=({signal})=>new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError'))));
+    FurnitureLibrary.add();
+  });
+  await page.locator('#catalogName').fill('取消后保留');
+  await page.locator('#catalogImages').setInputFiles(image);
+  await expect(page.locator('#catalogPreviews img')).toHaveCount(1);
+  await page.locator('#catalogRecognize').click();
+  await page.locator('#catalogCancel').click();
+  await expect(page.locator('#catalogStatus')).toContainText('已取消');
+  await expect(page.locator('#catalogName')).toHaveValue('取消后保留');
+  await expect(page.locator('#catalogSave')).toBeEnabled();
+});

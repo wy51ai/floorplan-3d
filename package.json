@@ -1,0 +1,17 @@
+{
+  "name": "floorplan-3d",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8000 --bind 127.0.0.1",
+    "test": "node --test tests/model.test.cjs tests/recognition.test.cjs tests/ai-client.test.cjs tests/furniture-model.test.cjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  },
+  "dependencies": {
+    "@tesseract.js-data/chi_sim": "^1.0.0",
+    "tesseract.js": "^6.0.1"
+  }
+}

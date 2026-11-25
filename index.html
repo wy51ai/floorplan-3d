@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#fffdf9">
-<title>户型装修设计</title>
+<title>3D 户型装修设计 · 来源 GitHub wy51ai/floorplan-3d</title>
 <style>
 :root{
   --bg:#f3efe7; --paper:#f7f4ee; --panel:#fffdf9; --line:#e3dccf; --ink:#2b2824; --muted:#8a8174;
@@ -26,6 +26,7 @@ header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 1
   background:var(--panel);border-bottom:1px solid var(--line)}
 .brand{display:flex;flex-direction:column;margin-right:8px;line-height:1.25}
 .brand b{font-size:15px;letter-spacing:.5px}
+.brand a{color:var(--teal);font-size:12px;text-decoration:underline}
 .brand span{color:var(--muted);font-size:12px}
 .grp{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff}
 .btn{border:0;background:transparent;padding:5px 9px;border-radius:6px;cursor:pointer;white-space:nowrap}
@@ -228,7 +229,7 @@ main.drawer-panel #fab{opacity:0;visibility:hidden}
       <button class="btn chip" id="tgLib" data-en="◧ Library">◧ 家具库</button>
       <button class="btn chip" id="tgPanel" data-en="Properties ◨">属性 ◨</button>
     </div>
-    <div class="brand"><b data-en="3BR 2LR 2BA · Interior Design">三室两厅两卫 · 装修设计</b><span id="subtitle">原始户型 1:60 · 尺寸单位 mm</span></div>
+    <div class="brand"><b data-en="3BR 2LR 2BA · Interior Design">三室两厅两卫 · 装修设计</b><span id="subtitle">原始户型 1:60 · 尺寸单位 mm</span><a href="https://github.com/wy51ai/floorplan-3d" target="_blank" rel="noopener noreferrer" data-en="GitHub source · wy51ai/floorplan-3d">GitHub 原作 · wy51ai/floorplan-3d</a></div>
     <div class="grp seg" id="viewSeg" title="切换 2D / 3D (T)" data-en-title="Switch 2D / 3D (T)">
       <span class="pill"></span>
       <button class="btn" data-view="2d" data-en="2D Plan">2D 平面</button>
@@ -377,7 +378,7 @@ const nm = s => LANG === 'en' ? (NAMES_EN[s] ?? s) : LANG === 'zht' ? s2t(s) : s
 // 静态文案：元素上写 data-en / data-en-title，中文原文首次切换时存进 dataset
 function applyStaticLang(){
   document.documentElement.lang = {zh:'zh-CN', zht:'zh-TW', en:'en'}[LANG];
-  document.title = tr('户型装修设计', 'Floor Plan Designer');
+  document.title = tr('3D 户型装修设计 · 来源 GitHub wy51ai/floorplan-3d', '3D Floor Plan Designer · GitHub source: wy51ai/floorplan-3d');
   document.querySelectorAll('[data-en]').forEach(el => { el.dataset.zh ??= el.textContent; el.textContent = tr(el.dataset.zh, el.dataset.en); });
   document.querySelectorAll('[data-en-title]').forEach(el => { el.dataset.zhTitle ??= el.title; el.title = tr(el.dataset.zhTitle, el.dataset.enTitle); });
   document.querySelectorAll('#langSel [data-lang]').forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
